@@ -1,0 +1,57 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: amakhiny <marvin@42.fr>                    +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2018/02/24 10:26:26 by amakhiny          #+#    #+#              #
+#    Updated: 2018/02/24 10:26:30 by amakhiny         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+NAME = fdf
+
+INC = -I/includes
+#INC = -I ./libft -I ./includes
+FLAGS = -Wall -Wextra -Werror -O3
+LIB_DIR = libft
+
+SRC_FILES = main.c
+
+RED		= \033[31m
+GREEN	= \033[32m
+CYAN	= \033[36m
+GREY	= \033[37m
+
+#SRC = $(SRC_FILES:.c=.o)
+OBJ = $(SRC_FILES:.c=.o)
+
+RED		= \033[31m
+GREEN	= \033[32m
+CYAN	= \033[36m
+GREY	= \033[37m
+
+all: $(NAME)
+
+$(NAME): $(OBJ)
+	@echo " $(GREEN)Compiling....."
+	@make -C libft
+	@gcc -o $(NAME) $(FLAGS) $(INC) $(OBJ) -lmlx -framework OpenGL -framework AppKit libft/libft.a
+	#@gcc -c $(FLAGS) -L $(LIB_DIR) -o $@ $^ -lmlx -framework OpenGL -framework AppKit libft/libft.a
+	@echo " $(CYAN)$(NAME) $(GREY)generated \xF0\x9F\x98\xBA"
+
+#%.o: %.c
+#	@gcc $(FLAGS) -c -o $@ $< $(INC)
+
+clean:
+	@/bin/rm -f $(OBJ)
+	@make -C libft clean
+	@echo " $(RED)All objects has been deleteted!"
+
+fclean: clean
+	@/bin/rm -f $(NAME)
+	@make -C libft fclean
+	@echo " $(RED)$(NAME)$(GREY) has been deleteted!"
+
+re: fclean all

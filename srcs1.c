@@ -95,7 +95,17 @@ void				ft_put_point(struct s_af *af);
 
 
 
-
+void				ft_degra2(t_af *af, int q)
+{
+	if (af->degra == 0)
+		return ;
+	else if (af->degra == 1)
+		af->b = q;
+	else if (af->degra == 2)
+		af->r = q;
+	else if (af->degra == 3)
+		af->v = q;
+}
 
 
 void			ft_my_pixel_put(t_af *af, int i, int j, float q)
@@ -173,17 +183,6 @@ void			ft_choose_persp(t_af *af, int i, int j)
 
 
 
-void				ft_degra2(t_af *af, int q)
-{
-	if (af->degra == 0)
-		return ;
-	else if (af->degra == 1)
-		af->b = q;
-	else if (af->degra == 2)
-		af->r = q;
-	else if (af->degra == 3)
-		af->v = q;
-}
 
 void				ft_exit_error(void)
 {
@@ -271,6 +270,34 @@ void				ft_print_info(t_af *p)
 }
 
 
+int					ft_key_hook(int keycode, t_af *af)
+{
+	int				i;
+	int				j;
+
+	i = 1;
+	if (keycode == ECHAP)
+		exit(1);
+	if (keycode == UP)
+		af->tight -= 30;
+	if (keycode == DOWN)
+		af->tight += 30;
+	if (keycode == RIGHT)
+		af->tight2 += 30;
+	if (keycode == LEFT)
+		af->tight2 -= 30;
+	if (keycode == ZOOM)
+	{
+		af->zoom += 50;
+		af->tight2 -= 25;
+		af->tight -= 25;
+	}
+	if (keycode == 117)
+		ft_reset(af);
+	return (ft_key_hook2(keycode, af));
+}
+
+
 int					ft_key_hook2(int keycode, t_af *af)
 {
 	if (keycode == DEZOOM)
@@ -354,6 +381,21 @@ int					ft_key_hook4(int keycode, t_af *af)
 
 
 
+void				ft_put_point(t_af *af)
+{
+	int				i;
+	int				j;
+
+	i = 0;
+	j = 0;
+	while (i < af->point[0][0]->size_y)
+	{
+		j = 0;
+		while (j < af->point[i][0]->size_x)
+			ft_choose_persp(af, i, j++);
+		i++;
+	}
+}
 
 
 static int			ft_loop_key_hook(t_af *af)
@@ -368,32 +410,6 @@ static int			ft_loop_key_hook(t_af *af)
 	return (0);
 }
 
-int					ft_key_hook(int keycode, t_af *af)
-{
-	int				i;
-	int				j;
-
-	i = 1;
-	if (keycode == ECHAP)
-		exit(1);
-	if (keycode == UP)
-		af->tight -= 30;
-	if (keycode == DOWN)
-		af->tight += 30;
-	if (keycode == RIGHT)
-		af->tight2 += 30;
-	if (keycode == LEFT)
-		af->tight2 -= 30;
-	if (keycode == ZOOM)
-	{
-		af->zoom += 50;
-		af->tight2 -= 25;
-		af->tight -= 25;
-	}
-	if (keycode == 117)
-		ft_reset(af);
-	return (ft_key_hook2(keycode, af));
-}
 
 int					ft_mouse_hook(int button, int x, int y, t_af *af)
 {
@@ -423,27 +439,16 @@ int					ft_mouse_hook(int button, int x, int y, t_af *af)
 	return (0);
 }
 
-void				ft_put_point(t_af *af)
+
+
+
+
+
+void				ft_count_size2(int tmp, int spaces)
 {
-	int				i;
-	int				j;
-
-	i = 0;
-	j = 0;
-	while (i < af->point[0][0]->size_y)
-	{
-		j = 0;
-		while (j < af->point[i][0]->size_x)
-			ft_choose_persp(af, i, j++);
-		i++;
-	}
+	if (tmp != 0 && (tmp != spaces))
+		ft_exit_error();
 }
-
-
-
-
-
-
 
 
 int					ft_count_size(int fd)
@@ -595,13 +600,7 @@ void				ft_reset(t_af *af)
 	af->degra = 0;
 }
 
-void				ft_count_size2(int tmp, int spaces)
-{
-	if (tmp != 0 && (tmp != spaces))
-		ft_exit_error();
-}
-
-void				ft_get_map_hight(t_af *af)
+oid				ft_get_map_hight(t_af *af)
 {
 	int				i;
 	int				j;

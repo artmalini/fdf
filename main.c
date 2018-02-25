@@ -633,8 +633,122 @@ int		main(int argc, char **argv)
 	return (0);
 }
 
-/*int		main(int argc, char **argv)
+
+
+
+
+
+typedef struct			s_point
 {
-	ft_putchar('f');
+	int					x;
+	int					y;
+}						t_place;
+
+typedef struct 	s_viz
+{
+	char 		**card;
+	int 		hcard;
+	int 		wcard;
+	int 		r;
+	int 		g;
+	int 		b;
+	int 		stop;
+	int 		err;
+	int 		ymax;
+	int 		xmax;
+
+	t_place		*coord;
+	char 		*drw;
+	int 		endian;
+	int			bits_per_pixel;
+	int 		size_line;
+	void 		*mlx;
+	void 		*win;
+	void		*img;
+}				t_vis;
+
+int		print_err(char *err)
+{
+	ft_putstr(err);
 	return (0);
-}*/
+}
+
+int		mapsize_and_check(char *out)
+{
+	int		i;
+	int		space;
+
+	space = 0;
+	i = -1;
+	while (output[++i] && output[0] != '\0')
+	{
+		if (((out[i] >= 48 && out[i] <= 57) || (out[i] >= 65 && out[i]
+			<= 70) || (out[i] >= 97 && out[i] <= 102)) &&
+			(out[i + 1] == ' ' || out[i + 1] == '\0'))
+			space++;
+	}	
+	return (space);
+}
+
+int		mapsize_and_check(int fd)
+{	
+	int		val;
+	int		space;
+	char	*output;
+	
+	val = 0;
+	space = 0;
+	while (get_next_line(fd, &output) > 0)
+	{		
+		space = mapsize_and_check2(output);
+		if (space == 0)
+		{
+			free(output);
+			return (0);
+		}
+		space = 0;
+		val++;
+		free(output);
+	}
+	return (val);
+}
+
+void	parse_file(t_vis *prm, char *arg)
+{
+	int		fd;
+	int		i;
+	int		mapsize;
+	char	*output;
+
+	i = 0;
+	mapsize = 0;
+	if(!(fd = open(arg[1], O_RDONLY)))
+		exit(1);
+	if(!(mapsize = mapsize_and_check(fd)))
+		exit(1);
+	close(fd);
+	fd = open(arg[1], O_RDONLY);
+	prm->card = (char**)malloc(sizeof(char*) * mapsize + 1);
+	prm->card[mapsize] = NULL;
+	while (get_next_line(fd, &output) > 0)
+	{
+		prm->card[i++] = output;
+		free(output);
+	}
+	close(fd);
+}
+
+int		main(int argc, char **argv)
+{
+	t_vis	*prm;
+
+	if (agc != 2)
+		return(print_err("Wrong input\n"));
+	prm = (t_vis *)malloc(sizeof(t_vis));
+	parse_file(prm, argv[1]);
+	free(prm);
+	return (0);
+}
+
+
+

@@ -345,7 +345,7 @@ int		exit_program(int keycode, void *param)
 {
 	if (keycode == ESC)
 	{
-		system("leaks fdf");
+		//system("leaks fdf");
 		(void)param;
 		exit(0);
 		return (1);

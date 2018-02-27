@@ -612,27 +612,6 @@ void			read_that_file(char *filename, t_env *env)
 	get_map(env->tab, env);
 }
 
-int		main(int argc, char **argv)
-{
-	t_env	*env;
-
-	if (argc > 1 && argc <= 3)
-	{
-		env = (t_env *)malloc(sizeof(t_env));
-		if (ft_strcmp(argv[1], "/dev/random") == 0)
-			return (0);
-		read_that_file(argv[1], env);
-		if (init_struct(env) == 0 || env->map == NULL)
-			return (0);
-		if (argc == 3)
-			check_argv(argv[2], env);
-		mlx_key_hook(env->win, ft_key_hook, env);
-		mlx_expose_hook(env->win, expose_hook, env);
-		mlx_do_sync(env->mlx);
-		mlx_loop(env->mlx);
-	}
-	ft_putendl("Too many arguments");
-	return (0);
 }*/
 
 

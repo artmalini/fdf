@@ -17,7 +17,7 @@
 # include "includes/get_next_line.h"
 
 #include <stdio.h>
-
+#include <math.h>
 /*# define ESC			53
 # define LEFT			123
 # define RIGHT			124
@@ -36,610 +36,20 @@
 
 # define WIN_X			1000
 # define WIN_Y			1080
-
-# define ABS(x)			((x) < 0 ? -(x) : (x))
-
-# define ENDIAN			&(e->endian)
-# define BBP			&(e->bbp)
-# define PIKE			e->spike
-
-typedef unsigned char	t_bytes;
-
-typedef struct			s_rgb
-{
-	t_bytes				b;
-	t_bytes				g;
-	t_bytes				r;
-}						t_rgb;
-
-typedef union			u_color
-{
-	size_t				color;
-	t_rgb				rgb;
-}						t_color;
-
-typedef struct			s_point
-{
-	int					x;
-	int					y;
-}						t_point;
-
-typedef struct			s_env
-{
-	void				*mlx;
-	void				*win;
-	void				*image;
-	char				*image_addr;
-	int					id;
-	int					size_line;
-	int					bbp;
-	int					endian;
-	size_t				color;
-	char				**tab;
-	int					**map;
-	t_point				**draw;
-	int					x;
-	int					y;
-	int					pos_x;
-	int					pos_y;
-	double				spike;
-	int					pitch;
-	int					size;
-	int					ui;
-}						t_env;
-
-void					ft_draw_border(t_env *env);
-int						check_for_char(t_env *env);
-void					ft_draw_image(t_env *env);
-void					get_color(int y, int x, t_env *env);
-void					ft_draw_border(t_env *env);
-void					fill_image(t_env *env);
-void					create_image(t_env *env);
-void					read_that_file(char *filename, t_env *env);
-int						**put_in_tab(char *str);
-int						ft_key_hook(int keycode, t_env *env);
-int						init_struct(t_env *env);
-void					ft_draw_line(t_point p1, t_point p2, t_env *e);
-int						expose_hook(t_env *env);
-void					display_key(t_env *env);
-void					ft_display_variable(t_env *env);
-void					check_argv(char *arg, t_env *env);
-
-
-int		ft_isspace(int c)
-{
-	c = (unsigned char)c;
-	if (c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\t'
-			|| c == '\r' || c == '\f')
-		return (1);
-	else
-		return (0);
-}
-
-int		ft_ishexa(char c)
-{
-	if (ft_isdigit(c) || (c >= 'A' && c <= 'F') || c == 'x' || c == ',')
-		return (1);
-	else
-		return (0);
-}
-
-int		check_for_char(t_env *env)
-{
-	int i;
-	int j;
-
-	i = 0;
-	while (env->tab[i])
-	{
-		j = 0;
-		while (env->tab[i][j])
-		{
-			if (!ft_ishexa(env->tab[i][j])
-			&& !ft_isspace(env->tab[i][j]) && env->tab[i][j] != '-')
-				return (0);
-			j++;
-		}
-		i++;
-	}
-	return (1);
-}
-
-void	check_argv(char *arg, t_env *env)
-{
-	if (!ft_strcmp(arg, "mars"))
-		env->id = 2;
-	else
-		env->id = 1;
-}
-
-
-
-
-
-
-void	get_color1(int y, int x, t_env *env)
-{
-	if (env->map[y][x] <= 0)
-		env->color = BLUE;
-	else if (env->map[y][x] > 0 && env->map[y][x] <= 40)
-		env->color = GREEN;
-	else if (env->map[y][x] > 40 && env->map[y][x] <= 120)
-		env->color = BROWN;
-	else
-		env->color = WHITE;
-}
-
-void	get_color2(int y, int x, t_env *env)
-{
-	t_color u;
-
-	u.rgb.r = (env->map[y][x] * 10);
-	if (u.rgb.r <= 60)
-		u.rgb.r = 60;
-	if (u.rgb.r > 255)
-		u.rgb.r = 255;
-	u.rgb.b = 0;
-	u.rgb.g = 0;
-	env->color = u.color;
-}
-
-void	get_color(int y, int x, t_env *env)
-{
-	if (env->id == 1)
-		get_color1(y, x, env);
-	else if (env->id == 2)
-		get_color2(y, x, env);
-	else
-		get_color1(y, x, env);
-}
-
-
-
-static void	ft_draw_y_border(t_env *e)
-{
-	int		y;
-	int		x;
-	t_point	p1;
-	t_point	p2;
-	int		xx;
-
-	y = 0;
-	while (y < e->y - 1)
-	{
-		x = e->x - 1;
-		xx = e->pos_x - (y * e->size / 2);
-		get_color(y, x, e);
-		p1.y = e->pos_y + (y * e->size - (e->map[y][x] * e->spike));
-		p1.x = xx + x * e->size;
-		p2.y = e->pos_y + ((y + 1) * e->size - (e->map[y + 1][x] * e->spike));
-		p2.x = e->pos_x - ((y + 1) * e->size / 2) + x * e->size;
-		ft_draw_line(p1, p2, e);
-		y++;
-	}
-}
-
-static void	ft_draw_x_border(t_env *e)
-{
-	int		y;
-	int		x;
-	t_point	p1;
-	t_point p2;
-	int		xx;
-
-	y = e->y - 1;
-	x = 0;
-	xx = e->pos_x - (y * e->size / 2);
-	while (x < e->x - 1)
-	{
-		get_color(y, x, e);
-		p1.y = e->pos_y + (y * e->size - (e->map[y][x] * e->spike));
-		p1.x = xx + x * e->size;
-		p2.y = e->pos_y + (y * e->size - (e->map[y][x + 1] * e->spike));
-		p2.x = xx + (x + 1) * e->size;
-		ft_draw_line(p1, p2, e);
-		x++;
-	}
-}
-
-void		ft_draw_border(t_env *env)
-{
-	ft_draw_y_border(env);
-	ft_draw_x_border(env);
-}
-
-
-
-
-void	draw_color_in_image(t_env *env, int x, int y)
-{
-	t_color	u;
-	int		p;
-
-	u.color = env->color;
-	p = x * 4 + y * env->size_line;
-	if (y > 0 && y < WIN_Y && x > 0 && x < WIN_X)
-	{
-		env->image_addr[p] = u.rgb.b;
-		env->image_addr[p + 1] = u.rgb.g;
-		env->image_addr[p + 2] = u.rgb.r;
-	}
-}
-
-void	create_image(t_env *e)
-{
-	e->endian = 0;
-	e->bbp = 8;
-	e->size_line = WIN_X;
-	e->image = mlx_new_image(e->mlx, WIN_X, WIN_Y);
-	e->image_addr = mlx_get_data_addr(e->image, BBP, &(e->size_line), ENDIAN);
-}
-
-void	ft_draw_line(t_point p1, t_point p2, t_env *e)
-{
-	t_point		d;
-	t_point		s;
-	int			err;
-	int			e2;
-
-	d.x = ABS(p2.x - p1.x);
-	d.y = ABS(p2.y - p1.y);
-	s.x = p1.x < p2.x ? 1 : -1;
-	s.y = p1.y < p2.y ? 1 : -1;
-	err = (d.x > d.y ? d.x : -d.y) / 2;
-	while (42)
-	{
-		draw_color_in_image(e, p1.x, p1.y);
-		if (p1.x == p2.x && p1.y == p2.y)
-			break ;
-		e2 = err;
-		if (e2 > -d.x && ((err -= d.y) || !err))
-			p1.x += s.x;
-		if (e2 < d.y)
-		{
-			err += d.x;
-			p1.y += s.y;
-		}
-	}
-}
-
-void	ft_draw_image(t_env *e)
-{
-	int		y;
-	int		x;
-	t_point	p1;
-	t_point	p2;
-	int		xx;
-
-	y = -1;
-	while (++y < e->y - 1)
-	{
-		x = -1;
-		xx = e->pos_x - (y * e->size / 2);
-		while (++x < e->x - 1)
-		{
-			get_color(y, x, e);
-			p1.y = e->pos_y + (y * e->size - (e->map[y][x] * PIKE));
-			p1.x = xx + x * e->size;
-			p2.y = e->pos_y + ((y + 1) * e->size - (e->map[y + 1][x] * PIKE));
-			p2.x = e->pos_x - ((y + 1) * e->size / 2) + x * e->size;
-			ft_draw_line(p1, p2, e);
-			p2.y = e->pos_y + (y * e->size - (e->map[y][x + 1] * PIKE));
-			p2.x = xx + (x + 1) * e->size;
-			ft_draw_line(p1, p2, e);
-		}
-	}
-	ft_draw_border(e);
-}
-
-
-
-
-
-
-
-
-
-
-
-void	display_key(t_env *env)
-{
-	mlx_string_put(env->mlx, env->win, 0, 0, WHITE, "ESC to quit");
-	mlx_string_put(env->mlx, env->win, 0, 30, WHITE, "Use arrows to move");
-	mlx_string_put(env->mlx, env->win, 0, 60, WHITE, "+ & - to resize");
-	mlx_string_put(env->mlx, env->win, 0, 90, WHITE, "* & / to resize pikes");
-	mlx_string_put(env->mlx, env->win, WIN_X - 93, 0, WHITE, "C to hide");
-}
-
-void	ft_display_variable(t_env *env)
-{
-	mlx_string_put(env->mlx, env->win, 0, 150, WHITE, "Size: ");
-	mlx_string_put(env->mlx, env->win, 70, 150, WHITE, ft_itoa(env->size));
-	mlx_string_put(env->mlx, env->win, 0, 180, WHITE, "X0: ");
-	mlx_string_put(env->mlx, env->win, 70, 180, WHITE, ft_itoa(env->pos_x));
-	mlx_string_put(env->mlx, env->win, 0, 210, WHITE, "Y0: ");
-	mlx_string_put(env->mlx, env->win, 70, 210, WHITE, ft_itoa(env->pos_y));
-}
-
-int		exit_program(int keycode, void *param)
-{
-	if (keycode == ESC)
-	{
-		//system("leaks fdf");
-		(void)param;
-		exit(0);
-		return (1);
-	}
-	return (0);
-}
-
-int		handle_size(int keycode, t_env *env)
-{
-	if (keycode == MINUS)
-	{
-		env->size = env->size / 2;
-		env->pos_x = env->pos_x - 25;
-		if (env->size < 1)
-			env->size = 1;
-		expose_hook(env);
-	}
-	else if (keycode == PLUS)
-	{
-		env->size = env->size * 2;
-		env->pos_x = env->pos_x + 25;
-		if (env->size > 100)
-			env->size = 100;
-		expose_hook(env);
-	}
-	return (0);
-}
-
-int		handle_pos(int keycode, t_env *env)
-{
-	if (keycode == LEFT)
-	{
-		env->pos_x = env->pos_x - 10;
-		expose_hook(env);
-	}
-	else if (keycode == RIGHT)
-	{
-		env->pos_x = env->pos_x + 10;
-		expose_hook(env);
-	}
-	else if (keycode == UP)
-	{
-		env->pos_y = env->pos_y - 10;
-		expose_hook(env);
-	}
-	else if (keycode == DOWN)
-	{
-		env->pos_y = env->pos_y + 10;
-		expose_hook(env);
-	}
-	return (0);
-}
-
-int		handle_spike(int keycode, t_env *env)
-{
-	if (keycode == STAR)
-	{
-		env->spike = env->spike + 0.1;
-		if (env->spike == 10)
-			env->spike = 10;
-		expose_hook(env);
-	}
-	else if (keycode == SLASH)
-	{
-		env->spike = env->spike - 0.1;
-		if (env->spike == 0)
-			env->spike = 0.1;
-		expose_hook(env);
-	}
-	return (0);
-}
-
-int		ft_key_hook(int keycode, t_env *env)
-{
-	if (keycode == ESC)
-		exit_program(keycode, 0);
-	else if (keycode == MINUS || keycode == PLUS)
-		handle_size(keycode, env);
-	else if (keycode == LEFT || keycode == RIGHT
-			|| keycode == UP || keycode == DOWN)
-		handle_pos(keycode, env);
-	else if (keycode == SLASH || keycode == STAR)
-		handle_spike(keycode, env);
-	else if (keycode == KEY_C)
-	{
-		env->ui = !env->ui ? 1 : 0;
-		expose_hook(env);
-	}
-	return (0);
-}
-
-
-
-
-int		init_struct(t_env *env)
-{
-	if (!(env->mlx = mlx_init()))
-		return (0);
-	if (!(env->win = mlx_new_window(env->mlx, WIN_X, WIN_Y, "FdF")))
-		return (0);
-	env->id = 1;
-	env->size = 4;
-	env->pitch = 4;
-	env->spike = 1;
-	env->pos_x = 250;
-	env->pos_y = 150;
-	env->ui = 1;
-	env->image = NULL;
-	env->image_addr = NULL;
-	return (1);
-}
-
-void	ft_clean(t_env *env)
-{
-	t_point	p1;
-	int		p;
-
-	p1.y = 0;
-	while (p1.y < WIN_Y)
-	{
-		p1.x = 0;
-		while (p1.x < WIN_X)
-		{
-			p = p1.x * 4 + p1.y * env->size_line;
-			env->image_addr[p] = 0;
-			env->image_addr[p + 1] = 0;
-			env->image_addr[p + 2] = 0;
-			p1.x++;
-		}
-		p1.y++;
-	}
-}
-
-int		expose_hook(t_env *env)
-{
-	if (env->image == NULL)
-		create_image(env);
-	ft_draw_image(env);
-	mlx_put_image_to_window(env->mlx, env->win, env->image, 0, 0);
-	if (env->ui == 1)
-	{
-		display_key(env);
-		ft_display_variable(env);
-	}
-	mlx_do_sync(env->mlx);
-	ft_clean(env);
-	return (0);
-}
-
-static int		ft_cnt_parts(const char *s, char c)
-{
-	int		cnt;
-	int		in_substring;
-
-	in_substring = 0;
-	cnt = 0;
-	while (*s != '\0')
-	{
-		if (in_substring == 1 && *s == c)
-			in_substring = 0;
-		if (in_substring == 0 && *s != c)
-		{
-			in_substring = 1;
-			cnt++;
-		}
-		s++;
-	}
-	return (cnt);
-}
-
-static int		get_max_x(char **tab, t_env *env)
-{
-	int i;
-	int	x;
-	int	max_x;
-
-	i = 0;
-	max_x = 0;
-	while (tab[i])
-	{
-		x = ft_cnt_parts(tab[i], ' ');
-		max_x = max_x < x ? x : max_x;
-		i++;
-	}
-	env->x = max_x;
-	return (0);
-}
-
-static int		get_map(char **tab, t_env *env)
-{
-	int		**map;
-	char	**tmp;
-	int		i;
-	int		j;
-
-	if (check_for_char(env) == 0)
-		return (0);
-	get_max_x(env->tab, env);
-	map = (int **)malloc(sizeof(int *) * env->y);
-	i = -1;
-	while (tab[++i])
-	{
-		j = -1;
-		map[i] = (int *)malloc(sizeof(int) * env->x);
-		tmp = ft_strsplit(tab[i], ' ');
-		while (tmp[++j])
-			map[i][j] = ft_atoi(tmp[j]);
-		while (j < env->x)
-		{
-			map[i][j] = 0;
-			j++;
-		}
-	}
-	env->map = map;
-	return (0);
-}
-
-void			read_that_file(char *filename, t_env *env)
-{
-	int		fd;
-	char	*str;
-	char	*tmp;
-	int		ret;
-	char	*nl;
-
-	nl = ft_strdup("\n");
-	if ((fd = open(filename, O_RDONLY)) == -1)
-		return ;
-	tmp = ft_strnew(0);
-	env->y = 0;
-	while (42)
-	{
-		ret = get_next_line(fd, &str);
-		if (ret != 1)
-			break ;
-		tmp = ft_strjoin(tmp, str);
-		tmp = ft_strjoin(tmp, nl);
-		env->y++;
-	}
-	if (ret == -1)
-		return ;
-	else
-		env->tab = ft_strsplit(tmp, '\n');
-	get_map(env->tab, env);
-}
-
-int		main(int argc, char **argv)
-{
-	t_env	*env;
-
-	if (argc > 1 && argc <= 3)
-	{
-		env = (t_env *)malloc(sizeof(t_env));
-		if (ft_strcmp(argv[1], "/dev/random") == 0)
-			return (0);
-		read_that_file(argv[1], env);
-		if (init_struct(env) == 0 || env->map == NULL)
-			return (0);
-		if (argc == 3)
-			check_argv(argv[2], env);
-		mlx_key_hook(env->win, ft_key_hook, env);
-		mlx_expose_hook(env->win, expose_hook, env);
-		mlx_do_sync(env->mlx);
-		mlx_loop(env->mlx);
-	}
-	ft_putendl("Too many arguments");
-	return (0);
-}*/
-
-
-
+*/
 
 # define H			1000
 # define W			1080
+# define UP			126
+# define DOWN		125
+# define RIGHT		124
+# define LEFT		123
+# define PLUS		69
+# define MINUS		78
+# define BLUE			0x0000FF
+# define GREEN			0x00F611
+# define BROWN			0x541919
+# define WHITE			0xFFFFFF
 # define ABS(x)		((x) < 0 ? -(x) : (x))
 
 typedef struct			s_point
@@ -656,8 +66,11 @@ typedef struct 	s_viz
 	int			size;
 	int			size_line;
 	int			pos_x;
-	int			pos_y;
-	int			spike;
+	int			pos_y;	
+	double			zoom;
+	int			angl_x;
+	int			angl_y;
+	int			angl_z;
 
 	int 		r;
 	int 		g;
@@ -667,7 +80,6 @@ typedef struct 	s_viz
 	int 		ymax;
 	int 		xmax;
 
-	t_place		*coord;
 	char 		*drw;
 	int 		e;
 	int			bi;
@@ -701,6 +113,26 @@ void	free_int_map(t_vis *prm, int size)
 	while (++i < size)
 		ft_memdel((void **)&prm->card[i]);
 	ft_memdel((void **)&prm->card);
+}
+
+int		map_check_char(char *out)
+{
+	int		i;
+	int		space;
+
+	space = 0;
+	i = -1;
+	while (out[++i] && out[0] != '\0')
+	{
+		if (((out[i] >= 48 && out[i] <= 57) || (out[i] >= 65 && out[i]
+			<= 70) || (out[i] >= 97 && out[i] <= 102)) ||
+			(out[i] == ' ' || out[i] == '\n'))
+			space++;
+	}
+	if (space != i)
+		return (0);
+	//fprintf(stderr, "space %d\n", space);	
+	return (1);
 }
 
 int		mapsize_and_check2(char *out)
@@ -743,7 +175,9 @@ int		mapsize_and_check(int fd)
 	space = 0;
 	while (get_next_line(fd, &output) > 0)
 	{		
-		space = mapsize_and_check2(output);		
+		space = mapsize_and_check2(output);
+		if (!map_check_char(output))
+			space = 0;
 		if (space == 0)
 		{
 			free(output);
@@ -824,140 +258,221 @@ void	build_card(t_vis *prm, int fd, char *output, char **arg)
 
 
 
+void		fit_color(t_vis *env, int x, int y)
+{
+	//fprintf(stderr, "prm->card[y][x] * prm->zoom %f\n", env->card[y][x] * env->zoom);	
+	double	val;
+	intmax_t	i;
+	//int			hex;
+
+	//hex = 0x7f8711;
+	val = env->card[y][x] * env->zoom;
+	i = 1;
+	i *= val; 
+	//(val == 0) ? val = 0 : val;
+	//fprintf(stderr, "### %f\n", ((hex >> 16) & 0xFF) / 255.0);
+	//fprintf(stderr, "### %f\n", ((hex >> 8) & 0xFF) / 255.0);
+	//fprintf(stderr, "e->card[y][x] * e->zoom %ju\n", i);
+	if (i == 0)		
+	{
+		env->r = 55;
+		env->g = 244;
+		env->b = 89;
+		// env->r = ((hex >> 16) & 0xFF) / 255.0;
+		// env->g = ((hex >> 8) & 0xFF) / 255.0;
+		// env->b = ((hex) & 0xFF) / 255.0;
+	}
+	else if (i < 0)
+	{
+		env->r = 66;
+		env->g = 128;
+		env->b = 244;
+	}
+	else if (i > 0 && i < 80)
+	{
+		env->r = 96;
+		env->g = 66;
+		env->b = 49;
+	}
+	else
+	{
+		env->r = 255;
+		env->g = 255;
+		env->b = 255;
+	}
+	// if (env->card[y][x] <= 0)
+	// 	return (55);
+	// else if (env->card[y][x] > 0 && env->card[y][x] <= 40)
+	// 	return (100);
+	// else if (env->card[y][x] > 40 && env->card[y][x] <= 120)
+	// 	return (180);
+	// else
+	// 	return (255);
+}
 
 
 
 
-
-void	draw_color_in_image(t_vis *env, int x, int y)
+void	draw_color_in_image(t_vis *prm, int x, int y)
 {
 	//t_color	u;
 	int		p;
 
-	//u.color = env->color;
-	p = x * 4 + y * env->size_line;
+	//u.color = prm->color;
+	p = x * 4 + y * prm->size_line;
+	//fprintf(stderr, "p %d\n", p);
 	if (y > 0 && y < H && x > 0 && x < W)
 	{
-		// env->img[p] = u.rgb.b;
-		// env->img[p + 1] = u.rgb.g;
-		// env->img[p + 2] = u.rgb.r;
-		env->drw[p] = 89;
-		env->drw[p + 1] = 244;
-		env->drw[p + 2] = 66;		
+		// prm->img[p] = u.rgb.b;
+		// prm->img[p + 1] = u.rgb.g;
+		// prm->img[p + 2] = u.rgb.r;
+		//prm->drw[p] = 89;
+		//prm->drw[p + 1] = 244;
+		//prm->drw[p + 2] = 66;	
+		prm->drw[p] = prm->b;
+		prm->drw[p + 1] = prm->g;
+		prm->drw[p + 2] = prm->r;	
 	}
 }
 
-void	ft_draw_line(t_place p1, t_place p2, t_vis *e)
+void	color_paint(t_place v0, t_place v1, t_vis *prm)
 {
 	t_place		d;
 	t_place		s;
 	int			err;
 	int			e2;
 
-	d.x = ABS(p2.x - p1.x);
-	d.y = ABS(p2.y - p1.y);
-	s.x = p1.x < p2.x ? 1 : -1;
-	s.y = p1.y < p2.y ? 1 : -1;
+	d.x = ABS(v1.x - v0.x);
+	d.y = ABS(v1.y - v0.y);
+	s.x = v0.x < v1.x ? 1 : -1;
+	s.y = v0.y < v1.y ? 1 : -1;
 	err = (d.x > d.y ? d.x : -d.y) / 2;
+	//fprintf(stderr, "err %d\n", err);
 	while (1)
 	{
-		draw_color_in_image(e, p1.x, p1.y);
-		if (p1.x == p2.x && p1.y == p2.y)
+		//fprintf(stderr, " v0.x %d v0.y %d\n", v0.x, v0.y);
+		draw_color_in_image(prm, v0.x, v0.y);
+		if (v0.x == v1.x && v0.y == v1.y)
 			break ;
 		e2 = err;
+		//fprintf(stderr, "e2 %d\n", e2);
 		if (e2 > -d.x && ((err -= d.y) || !err))
-			p1.x += s.x;
+			v0.x += s.x;
 		if (e2 < d.y)
 		{
+			//fprintf(stderr, "######### (e2 < d.y )e2 %d d.y %d\n", e2, d.y);
 			err += d.x;
-			p1.y += s.y;
+			v0.y += s.y;
 		}
 	}
 }
 
 
-static void	ft_draw_y_border(t_vis *e)
+void	border_y(t_vis *prm)
 {
 	int		y;
 	int		x;
-	t_place	p1;
-	t_place	p2;
-	int		xx;
+	t_place	v0;
+	t_place	v1;
+	//int		xx;
 
 	y = 0;
-	while (y < e->ycard - 1)
+	while (y < prm->ycard - 1)
 	{
-		x = e->xcard - 1;
-		xx = e->pos_x - (y * e->size / 2);
+		x = prm->xcard - 1;
+		//xx = prm->pos_x - (y * prm->size / 2);
 		//get_color(y, x, e);
-		p1.y = e->pos_y + (y * e->size - (e->card[y][x] * e->spike));
-		p1.x = xx + x * e->size;
-		p2.y = e->pos_y + ((y + 1) * e->size - (e->card[y + 1][x] * e->spike));
-		p2.x = e->pos_x - ((y + 1) * e->size / 2) + x * e->size;
-		ft_draw_line(p1, p2, e);
+		v0.y = prm->pos_y + (y * prm->size - (prm->card[y][x] * prm->zoom));
+		v0.x = (prm->pos_x - (y * prm->size / 2)) + x * prm->size;
+		v1.y = prm->pos_y + ((y + 1) * prm->size - (prm->card[y + 1][x] * prm->zoom));
+		v1.x = prm->pos_x - ((y + 1) * prm->size / 2) + x * prm->size;
+		color_paint(v0, v1, prm);
 		y++;
 	}
 }
 
-static void	ft_draw_x_border(t_vis *e)
+void	border_x(t_vis *prm)
 {
 	int		y;
 	int		x;
-	t_place	p1;
-	t_place p2;
-	int		xx;
+	t_place	v0;
+	t_place v1;
+	//int		xx;
 
-	y = e->ycard - 1;
+	y = prm->ycard - 1;
 	x = 0;
-	xx = e->pos_x - (y * e->size / 2);
-	while (x < e->xcard - 1)
+	//xx = prm->pos_x - (y * prm->size / 2);
+	while (x < prm->xcard - 1)
 	{
 		//get_color(y, x, e);
-		p1.y = e->pos_y + (y * e->size - (e->card[y][x] * e->spike));
-		p1.x = xx + x * e->size;
-		p2.y = e->pos_y + (y * e->size - (e->card[y][x + 1] * e->spike));
-		p2.x = xx + (x + 1) * e->size;
-		ft_draw_line(p1, p2, e);
+		v0.y = prm->pos_y + (y * prm->size - (prm->card[y][x] * prm->zoom));
+		v0.x = (prm->pos_x - (y * prm->size / 2)) + x * prm->size;
+		v1.y = prm->pos_y + (y * prm->size - (prm->card[y][x + 1] * prm->zoom));
+		v1.x = (prm->pos_x - (y * prm->size / 2)) + (x + 1) * prm->size;
+		color_paint(v0, v1, prm);
 		x++;
 	}
 }
 
-void		ft_draw_border(t_vis *env)
+void		color_paint_border(t_vis *prm)
 {
-	ft_draw_y_border(env);
-	ft_draw_x_border(env);
+	border_y(prm);
+	border_x(prm);
 }
 
-void	vis_map(t_vis *e)
+void	vis_map(t_vis *prm)
 {
-	int		y;
-	int		x;
-	t_place	p1;
-	t_place	p2;
-	int		xx;
+	int		i;
+	int		j;
+	t_place	v0;
+	t_place	v1;
+	//int		jj;
 
-	y = -1;
-	printf("###OK\n");
-	fprintf(stderr, "e->ycard %d e->xcard %d\n", e->ycard, e->xcard);
-	while (++y < e->ycard - 1)
+	float		angle;
+
+	i = -1;
+	//printf("###OK\n");
+	//fprintf(stderr, "prm->icard %d prm->jcard %d\n", prm->icard, prm->jcard);
+	while (++i < prm->ycard - 1)
 	{
-		x = -1;
-		xx = e->pos_x - (y * e->size / 2);
-		while (++x < e->xcard - 1)
+		j = -1;
+		//jj = prm->pos_x - (i * prm->size / 2);
+		while (++j < prm->xcard - 1)
 		{
-			//get_color(y, x, e);
-			p1.y = e->pos_y + (y * e->size - (e->card[y][x] * e->spike));
-			p1.x = xx + x * e->size;
-				fprintf(stderr, "p1.y %d p1.x %d\n", p1.y, p1.x);
-			p2.y = e->pos_y + ((y + 1) * e->size - (e->card[y + 1][x] * e->spike));
-			p2.x = e->pos_x - ((y + 1) * e->size / 2) + x * e->size;
-			ft_draw_line(p1, p2, e);
-			p2.y = e->pos_y + (y * e->size - (e->card[y][x + 1] * e->spike));
-			p2.x = xx + (x + 1) * e->size;
-			ft_draw_line(p1, p2, e);
+			fit_color(prm, j, i);
+			angle = (3.14159265 * prm->angl_x) / 180;
+			v0.y = prm->pos_y + ((i * prm->size) - (prm->card[i][j] * prm->zoom));
+			v0.x = (prm->pos_x - (i * prm->size / 2)) + j * prm->size;
+
+			v0.y = v0.y * cos(angle) + v0.x * sin(angle);
+			v0.x = v0.x * cos(angle) - v0.y * sin(angle);
+			v0.y = round(v0.y);
+			v0.x = round(v0.x);
+			//v0.y = prm->pos_y + (i * prm->size - (prm->card[i][j] * prm->zoom));
+			//v0.x = (prm->pos_x - (i * prm->size / 2)) + j * prm->size;
+				//fprintf(stderr, "v0.y %d v0.x %d\n", v0.y, v0.x);
+			angle = (3.14159265 * prm->angl_y) / 180;
+			v1.y = prm->pos_y + ((i + 1) * prm->size - (prm->card[i + 1][j] * prm->zoom));
+			v1.x = prm->pos_x - ((i + 1) * prm->size / 2) + j * prm->size;
+			v1.y = v1.y * cos(angle) - v1.x * sin(angle);
+			v1.x = v1.x * cos(angle) + v1.y * sin(angle);
+			v1.y = round(v1.y);
+			v1.x = round(v1.x);
+				//fprintf(stderr, "(i + 1) v0.y %d v0.x %d\n", v0.y, v0.x);
+			color_paint(v0, v1, prm);
+
+			angle = (3.14159265 * prm->angl_z) / 180;
+			v1.y = prm->pos_y + (i * prm->size - (prm->card[i][j + 1] * prm->zoom));
+			v1.x = (prm->pos_x - (i * prm->size / 2)) + (j + 1) * prm->size;
+				//fprintf(stderr, " (j + 1) v0.y %d v0.x %d\n", v0.i, v0.j);
+			v1.y = v1.y * cos(angle) + v1.x * sin(angle);
+			v1.x = v1.x * cos(angle) - v1.y * sin(angle);
+			v1.y = round(v1.y);
+			v1.x = round(v1.x);			
+			color_paint(v0, v1, prm);
 		}
 		//fprintf(stderr, "\n");
-		ft_draw_border(e);
+		color_paint_border(prm);
 	}
 }
 
@@ -982,15 +497,61 @@ int		image_builder(t_vis *prm)
 }
 
 
-int		vis_hook(int key, t_vis *prm)
+int		keyboard_vis_hook(int key, t_vis *prm)
 {
+	fprintf(stderr, "key %d\n", key);
 	if (key == 53)
 	{
 		//system("leaks fdf");
 		exit(1);
 	}
-	else
-		image_builder(prm);
+	else if (key == UP)
+		prm->pos_y -= 5;
+	else if (key == DOWN)
+		prm->pos_y += 5;
+	else if (key == LEFT)
+		prm->pos_x -= 5;
+	else if (key == RIGHT)
+		prm->pos_x += 5;
+	else if (key == PLUS)
+	{
+		prm->size += 1;
+		if (prm->size > 100)
+			prm->size = 100;
+	}
+	else if (key == MINUS)
+	{
+		prm->size -= 1;
+		if (prm->size < 1)
+			prm->size = 1;
+	}	
+	else if (key == 13)
+			prm->angl_y += 1;
+	else if (key == 1)
+			prm->angl_y -= 1;
+	else if (key == 0)
+			prm->angl_x += 1;
+	else if (key == 2)
+			prm->angl_x -= 1;
+	image_builder(prm);
+	return (0);
+}
+
+int		mouse_vis_hook(int key, int x, int y, t_vis *prm)
+{
+	if (key == 4)
+	{
+		prm->zoom += .1;
+		if (prm->zoom == 10)
+			prm->zoom = 10;
+	}
+	else if (key == 5)
+	{
+		prm->zoom -= .1;
+		if (prm->zoom == 0)
+			prm->zoom = .1;
+	}
+	image_builder(prm);
 	return (0);
 }
 
@@ -999,7 +560,8 @@ int		build_vis(t_vis *prm)
 	prm->mlx = mlx_init();
 	prm->win = mlx_new_window(prm->mlx, W, H, "FDF");
 	prm->img = mlx_new_image(prm->mlx, W, H);
-	mlx_hook(prm->win, 2, 1, vis_hook, prm);
+	mlx_hook(prm->win, 2, 1, keyboard_vis_hook, prm);
+	mlx_mouse_hook(prm->win, mouse_vis_hook, prm);
 	image_builder(prm);
 	//mlx_loop_hook(prm->mlx, image_builder, prm);
 
@@ -1017,7 +579,10 @@ void	struct_init(t_vis *prm)
 	prm->size = 8;
 	prm->pos_x = 500;
 	prm->pos_y = 500;
-	prm->spike = 1;
+	prm->zoom = 2;
+	prm->angl_x = 0;
+	prm->angl_y = 0;
+	prm->angl_z = 0;
 }
 
 void	parse_file(t_vis *prm, char **arg)
@@ -1034,7 +599,10 @@ void	parse_file(t_vis *prm, char **arg)
 	if(!(fd = open(arg[1], O_RDONLY)))
 		exit(1);
 	if(!(prm->ycard = mapsize_and_check(fd)))
+	{
+		print_err("Wrong map\n");
 		exit(1);
+	}
 	close(fd);
 	build_card(prm, fd, output, arg);
 	//free(output);

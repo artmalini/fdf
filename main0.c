@@ -597,8 +597,7 @@ int		build_vis(t_vis *prm)
 	image_builder(prm);
 	//mlx_loop_hook(prm->mlx, image_builder, prm);
 
-	mlx_loop(prm->mlx);	
-	//free all vis map!!!!! ++++++++++++++++++++++++++++++++++
+	mlx_loop(prm->mlx);
 	return (0);		
 }
 

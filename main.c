@@ -17,7 +17,11 @@
 # include "includes/get_next_line.h"
 
 #include <stdio.h>
+<<<<<<< HEAD
 #include <math.h>
+=======
+
+>>>>>>> ae4155d4ac4df1c074577a4cb6eb810b793a9f5c
 /*# define ESC			53
 # define LEFT			123
 # define RIGHT			124
@@ -496,6 +500,7 @@ int		image_builder(t_vis *prm)
 	return (0);
 }
 
+<<<<<<< HEAD
 
 int		keyboard_vis_hook(int key, t_vis *prm)
 {
@@ -556,6 +561,79 @@ int		mouse_vis_hook(int key, int x, int y, t_vis *prm)
 }
 
 int		build_vis(t_vis *prm)
+=======
+}*/
+
+
+
+
+# define H			1000
+# define W			1080
+# define ABS(x)		((x) < 0 ? -(x) : (x))
+
+typedef struct			s_point
+{
+	int					x;
+	int					y;
+}						t_place;
+
+typedef struct 	s_viz
+{
+	int 		**card;
+	int 		ycard;
+	int 		xcard;
+	int			size;
+	int			size_line;
+	int			pos_x;
+	int			pos_y;
+	int			spike;
+
+	int 		r;
+	int 		g;
+	int 		b;
+	int 		stop;
+	int 		err;
+	int 		ymax;
+	int 		xmax;
+
+	t_place		*coord;
+	char 		*drw;
+	int 		e;
+	int			bi;
+	int 		l;
+	void 		*mlx;
+	void 		*win;
+	void		*img;
+}				t_vis;
+
+int		print_err(char *err)
+{
+	ft_putstr(err);
+	return (0);
+}
+
+void	free_map(char **map, int size)
+{
+	int		i;
+
+	i = -1;
+	while (++i < size)
+		ft_memdel((void **)&map[i]);
+	ft_memdel((void **)&map);
+}
+
+void	free_int_map(t_vis *prm, int size)
+{
+	int		i;
+
+	i = -1;
+	while (++i < size)
+		ft_memdel((void **)&prm->card[i]);
+	ft_memdel((void **)&prm->card);
+}
+
+int		mapsize_and_check2(char *out)
+>>>>>>> ae4155d4ac4df1c074577a4cb6eb810b793a9f5c
 {
 	prm->mlx = mlx_init();
 	prm->win = mlx_new_window(prm->mlx, W, H, "FDF");
@@ -565,6 +643,7 @@ int		build_vis(t_vis *prm)
 	image_builder(prm);
 	//mlx_loop_hook(prm->mlx, image_builder, prm);
 
+<<<<<<< HEAD
 	mlx_loop(prm->mlx);	
 	//free all vis map!!!!! ++++++++++++++++++++++++++++++++++
 	return (0);		
@@ -602,11 +681,345 @@ void	parse_file(t_vis *prm, char **arg)
 	{
 		print_err("Wrong map\n");
 		exit(1);
+=======
+	space = 0;
+	i = -1;
+	while (out[++i] && out[0] != '\0')
+	{
+		if (((out[i] >= 48 && out[i] <= 57) || (out[i] >= 65 && out[i]
+			<= 70) || (out[i] >= 97 && out[i] <= 102)) &&
+			(out[i + 1] == ' ' || out[i + 1] == '\0'))
+			space++;
 	}
+	//fprintf(stderr, "space %d\n", space);	
+	return (space);
+}
+
+int		get_max_x(t_vis *prm, char *output)
+{
+	int		val;
+
+	val = mapsize_and_check2(output);
+	//prm->xcard = val;
+	if (val > prm->xcard)
+		return (val);
+	else
+		return (prm->xcard);
+}
+
+int		mapsize_and_check(int fd)
+{	
+	int		val;
+	int		space;
+	char	*output;
+	
+	val = 0;
+	space = 0;
+	while (get_next_line(fd, &output) > 0)
+	{		
+		space = mapsize_and_check2(output);		
+		if (space == 0)
+		{
+			free(output);
+			return (0);
+		}
+		//prm->xcard = get_max_x(prm, output);
+		//fprintf(stderr, "prm->xcard %d\n", prm->xcard);
+		space = 0;
+		val++;
+		free(output);
+	}
+	free(output);
+	return (val);
+}
+
+int		build_nbr(t_vis *prm, char **out, int xsize, int i)
+{
+	int		val;
+	int		k;
+	int		space;
+	char	**tmp;
+
+	space = -1;
+	val = 0;
+
+	tmp = ft_strsplit(out[0], ' ');
+	k = -1;
+	while (++k < xsize)
+	{
+		//prm->card[j][k] = ft_atoi(tmp[k]);
+		prm->card[i][k] = ft_atoi(tmp[k]);
+		//fprintf(stderr, "tmp[k] %s prm->card[i][k] %d", tmp[k], prm->card[i][k]);
+		//fprintf(stderr, "%d", prm->card[i][k]);
+	}
+	free_map(tmp, xsize);
+	free_map(out, 1);
+	return (0);
+}
+
+
+
+void	build_card(t_vis *prm, int fd, char *output, char **arg)
+{
+	int		i;
+	int		j;
+	int		k;
+	char	**tmp;
+
+	i = 0;
+	j = 0;
+	fd = open(arg[1], O_RDONLY);
+	prm->card = (int **)malloc(sizeof(int *) * prm->ycard);
+	while (get_next_line(fd, &output) > 0)
+	{		
+		if (output[0] != '\0')
+		{
+			//prm->xcard = get_max_x(prm, output);
+			prm->xcard = mapsize_and_check2(output);
+			prm->card[i] = (int *)malloc(sizeof(int) * prm->xcard);
+			if (!ft_strchr(output, '\n'))
+				tmp = ft_strsplit(output, '\n');
+
+			//fprintf(stderr, "strlen %d tmp[0] %s\n", prm->xcard, tmp[0]);
+			if (tmp[j])
+			{
+				build_nbr(prm, tmp, prm->xcard, i);
+				fprintf(stderr, "\n");
+			}
+			j = 0;
+			i++;
+		}
+		free(output);
+>>>>>>> ae4155d4ac4df1c074577a4cb6eb810b793a9f5c
+	}
+	free(output);
+}
+
+
+
+
+
+
+
+
+
+
+void	draw_color_in_image(t_vis *env, int x, int y)
+{
+	//t_color	u;
+	int		p;
+
+	//u.color = env->color;
+	p = x * 4 + y * env->size_line;
+	if (y > 0 && y < H && x > 0 && x < W)
+	{
+		// env->img[p] = u.rgb.b;
+		// env->img[p + 1] = u.rgb.g;
+		// env->img[p + 2] = u.rgb.r;
+		env->drw[p] = 89;
+		env->drw[p + 1] = 244;
+		env->drw[p + 2] = 66;		
+	}
+}
+
+void	ft_draw_line(t_place p1, t_place p2, t_vis *e)
+{
+	t_place		d;
+	t_place		s;
+	int			err;
+	int			e2;
+
+	d.x = ABS(p2.x - p1.x);
+	d.y = ABS(p2.y - p1.y);
+	s.x = p1.x < p2.x ? 1 : -1;
+	s.y = p1.y < p2.y ? 1 : -1;
+	err = (d.x > d.y ? d.x : -d.y) / 2;
+	while (1)
+	{
+		draw_color_in_image(e, p1.x, p1.y);
+		if (p1.x == p2.x && p1.y == p2.y)
+			break ;
+		e2 = err;
+		if (e2 > -d.x && ((err -= d.y) || !err))
+			p1.x += s.x;
+		if (e2 < d.y)
+		{
+			err += d.x;
+			p1.y += s.y;
+		}
+	}
+}
+
+
+static void	ft_draw_y_border(t_vis *e)
+{
+	int		y;
+	int		x;
+	t_place	p1;
+	t_place	p2;
+	int		xx;
+
+	y = 0;
+	while (y < e->ycard - 1)
+	{
+		x = e->xcard - 1;
+		xx = e->pos_x - (y * e->size / 2);
+		//get_color(y, x, e);
+		p1.y = e->pos_y + (y * e->size - (e->card[y][x] * e->spike));
+		p1.x = xx + x * e->size;
+		p2.y = e->pos_y + ((y + 1) * e->size - (e->card[y + 1][x] * e->spike));
+		p2.x = e->pos_x - ((y + 1) * e->size / 2) + x * e->size;
+		ft_draw_line(p1, p2, e);
+		y++;
+	}
+}
+
+static void	ft_draw_x_border(t_vis *e)
+{
+	int		y;
+	int		x;
+	t_place	p1;
+	t_place p2;
+	int		xx;
+
+	y = e->ycard - 1;
+	x = 0;
+	xx = e->pos_x - (y * e->size / 2);
+	while (x < e->xcard - 1)
+	{
+		//get_color(y, x, e);
+		p1.y = e->pos_y + (y * e->size - (e->card[y][x] * e->spike));
+		p1.x = xx + x * e->size;
+		p2.y = e->pos_y + (y * e->size - (e->card[y][x + 1] * e->spike));
+		p2.x = xx + (x + 1) * e->size;
+		ft_draw_line(p1, p2, e);
+		x++;
+	}
+}
+
+void		ft_draw_border(t_vis *env)
+{
+	ft_draw_y_border(env);
+	ft_draw_x_border(env);
+}
+
+void	vis_map(t_vis *e)
+{
+	int		y;
+	int		x;
+	t_place	p1;
+	t_place	p2;
+	int		xx;
+
+	y = -1;
+	printf("###OK\n");
+	fprintf(stderr, "e->ycard %d e->xcard %d\n", e->ycard, e->xcard);
+	while (++y < e->ycard - 1)
+	{
+		x = -1;
+		xx = e->pos_x - (y * e->size / 2);
+		while (++x < e->xcard - 1)
+		{
+			//get_color(y, x, e);
+			p1.y = e->pos_y + (y * e->size - (e->card[y][x] * e->spike));
+			p1.x = xx + x * e->size;
+				fprintf(stderr, "p1.y %d p1.x %d\n", p1.y, p1.x);
+			p2.y = e->pos_y + ((y + 1) * e->size - (e->card[y + 1][x] * e->spike));
+			p2.x = e->pos_x - ((y + 1) * e->size / 2) + x * e->size;
+			ft_draw_line(p1, p2, e);
+			p2.y = e->pos_y + (y * e->size - (e->card[y][x + 1] * e->spike));
+			p2.x = xx + (x + 1) * e->size;
+			ft_draw_line(p1, p2, e);
+		}
+		//fprintf(stderr, "\n");
+		ft_draw_border(e);
+	}
+}
+
+
+int		image_builder(t_vis *prm)
+{
+	//if (prm->img == NULL)
+	//	create_image(prm);
+	//ft_draw_image(prm);
+	prm->drw = mlx_get_data_addr(prm->img, &(prm->bi), &(prm->size_line), &(prm->e));
+	vis_map(prm);
+	mlx_put_image_to_window(prm->mlx, prm->win, prm->img, 0, 0);
+	mlx_destroy_image(prm->mlx, prm->img);
+	prm->img = mlx_new_image(prm->mlx, W, H);
+	//mlx_string_put(prm->mlx, prm->win, (W / 2), (H / 2), 0x0FFFFFF, ft_itoa(prm->xcard));
+	// if (prm->ui == 1)
+	// {
+	// 	display_key(prm);
+	// 	ft_display_variable(prm);
+	// }	
+	return (0);
+}
+
+
+int		vis_hook(int key, t_vis *prm)
+{
+	if (key == 53)
+	{
+		//system("leaks fdf");
+		exit(1);
+	}
+	else
+		image_builder(prm);
+	return (0);
+}
+
+int		build_vis(t_vis *prm)
+{
+	prm->mlx = mlx_init();
+	prm->win = mlx_new_window(prm->mlx, W, H, "FDF");
+	prm->img = mlx_new_image(prm->mlx, W, H);
+	mlx_hook(prm->win, 2, 1, vis_hook, prm);
+	image_builder(prm);
+	//mlx_loop_hook(prm->mlx, image_builder, prm);
+
+	mlx_loop(prm->mlx);	
+	//free all vis map!!!!! ++++++++++++++++++++++++++++++++++
+	return (0);		
+}
+
+void	struct_init(t_vis *prm)
+{
+	prm->img = NULL;
+	prm->xcard = 0;
+	prm->ycard = 0;
+	prm->size_line = W;
+	prm->size = 8;
+	prm->pos_x = 500;
+	prm->pos_y = 500;
+	prm->spike = 1;
+}
+
+void	parse_file(t_vis *prm, char **arg)
+{
+	int		fd;
+	
+	
+	//int		ysize;
+	//int		xsize;
+	char	*output;
+
+	
+	prm->ycard = 0;
+	if(!(fd = open(arg[1], O_RDONLY)))
+		exit(1);
+	if(!(prm->ycard = mapsize_and_check(fd)))
+		exit(1);
 	close(fd);
 	build_card(prm, fd, output, arg);
 	//free(output);
 	close(fd);
+<<<<<<< HEAD
+	build_card(prm, fd, output, arg);
+	//free(output);
+	close(fd);
+=======
+>>>>>>> ae4155d4ac4df1c074577a4cb6eb810b793a9f5c
 	build_vis(prm);
 
 	//free_int_map(prm, prm->ycard);

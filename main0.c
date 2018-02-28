@@ -116,23 +116,43 @@ void	free_int_map(t_vis *prm, int size)
 	ft_memdel((void **)&prm->card);
 }
 
+int		valid_hex(char *str)
+{
+	str++;
+	if (*str == '0')
+		str++;
+	if (*str == 'x')
+		str++;
+	while ((*str >= 65 && *str <= 70) ||
+			(*str >= 97 && *str <= 102))
+		str++;
+	//printf("str %d\n", atoi("001"));
+	if (*str != ' ')
+		return (0);
+	return (1);
+}
+
 int		map_check_char(char *out)
 {
-	int		i;
-	int		space;
+	int		k;
 
-	space = 0;
-	i = -1;
-	while (out[++i] && out[0] != '\0')
+	k = 0;
+	while (*out && *out != '\0')
 	{
-		if (((out[i] >= 48 && out[i] <= 57) || (out[i] >= 65 && out[i]
-			<= 70) || (out[i] >= 97 && out[i] <= 102)) ||
-			(out[i] == ' ' || out[i] == '\n'))
-			space++;
+		if (*out == ',')
+		{
+			if (!valid_hex(out))
+				return (0);		
+			while (*out != ' ')
+				out++;
+		}
+		else if (((*out >= 48 && *out <= 57)) ||
+			*out == ' ' || *out == '\n')
+			k++;
+		else
+			return (0);
+		out++;
 	}
-	if (space != i)
-		return (0);
-	//fprintf(stderr, "space %d\n", space);	
 	return (1);
 }
 
@@ -515,7 +535,7 @@ int		keyboard_vis_hook(int key, t_vis *prm)
 	if (key == 53)
 	{
 		//system("leaks fdf");
-		exit(1);
+		exit(exit(EXIT_SUCCESS););
 	}
 	else if (key == UP)
 		prm->pos_y -= 5;

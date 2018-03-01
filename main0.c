@@ -18,25 +18,6 @@
 
 #include <stdio.h>
 #include <math.h>
-/*# define ESC			53
-# define LEFT			123
-# define RIGHT			124
-# define UP				126
-# define DOWN			125
-# define MINUS			78
-# define PLUS			69
-# define KEY_C			8
-# define STAR			67
-# define SLASH			75
-
-# define BLUE			0x0000FF
-# define GREEN			0x00F611
-# define BROWN			0x541919
-# define WHITE			0xFFFFFF
-
-# define WIN_X			1000
-# define WIN_Y			1080
-*/
 
 # define H			1000
 # define W			1600

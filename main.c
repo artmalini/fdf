@@ -17,11 +17,7 @@
 # include "includes/get_next_line.h"
 
 #include <stdio.h>
-<<<<<<< HEAD
-#include <math.h>
-=======
 
->>>>>>> ae4155d4ac4df1c074577a4cb6eb810b793a9f5c
 /*# define ESC			53
 # define LEFT			123
 # define RIGHT			124
@@ -633,7 +629,6 @@ void	free_int_map(t_vis *prm, int size)
 }
 
 int		mapsize_and_check2(char *out)
->>>>>>> ae4155d4ac4df1c074577a4cb6eb810b793a9f5c
 {
 	prm->mlx = mlx_init();
 	prm->win = mlx_new_window(prm->mlx, W, H, "FDF");
@@ -643,7 +638,6 @@ int		mapsize_and_check2(char *out)
 	image_builder(prm);
 	//mlx_loop_hook(prm->mlx, image_builder, prm);
 
-<<<<<<< HEAD
 	mlx_loop(prm->mlx);	
 	//free all vis map!!!!! ++++++++++++++++++++++++++++++++++
 	return (0);		

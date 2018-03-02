@@ -38,8 +38,8 @@
 # define WIN_Y			1080
 */
 
-# define H			1000
-# define W			1600
+//# define H			1000
+//# define W			1600
 # define UP			126
 # define DOWN		125
 # define RIGHT		124
@@ -61,6 +61,7 @@ typedef struct			s_point
 typedef struct 	s_viz
 {
 	int 		**card;
+	int			**hex;
 	int 		ycard;
 	int 		xcard;
 	int			size;
@@ -124,34 +125,51 @@ int		valid_hex(char *str)
 	if (*str == 'x')
 		str++;
 	while ((*str >= 65 && *str <= 70) ||
-			(*str >= 97 && *str <= 102))
+			(*str >= 97 && *str <= 102) ||
+			(*str >= 48 && *str <= 57))
 		str++;
-	//printf("str %d\n", atoi("001"));
-	if (*str != ' ')
-		return (0);
-	return (1);
+	str--;
+	if ((*str >= 65 && *str <= 70) ||
+			(*str >= 97 && *str <= 102) ||
+			(*str >= 48 && *str <= 57))
+		return (1);
+	return (0);
 }
 
-int		map_check_char(char *out)
+int		map_check_char(char *out, int val)
 {
 	int		k;
 
 	k = 0;
-	while (*out && *out != '\0')
+	while (*out)
 	{
 		if (*out == ',')
 		{
+			//printf("map y %d x %d out %s\n", val, k, out);
 			if (!valid_hex(out))
-				return (0);		
-			while (*out != ' ')
+				return (0);
+			out++;
+			while ((*out >= 65 && *out <= 70) ||
+			(*out >= 97 && *out <= 102) ||
+			(*out >= 48 && *out <= 57) || *out == 'x')
+			{
+				//printf("out%s\n", out);
 				out++;
+				k++;
+				//printf("k %d\n", k);
+			}
+			//out--;
+			//printf("out%s\n", out);
 		}
-		else if (((*out >= 48 && *out <= 57)) ||
-			*out == ' ' || *out == '\n')
+		else if (((*out >= 48 && *out <= 57) || (*out >= 65 && *out
+			<= 70) || (*out >= 97 && *out <= 102) || *out == ' ' ||
+			*out == '\n'))
+		{
+			out++;
 			k++;
+		}
 		else
 			return (0);
-		out++;
 	}
 	return (1);
 }
@@ -187,30 +205,30 @@ int		map_check2(char *out)
 }*/
 
 int		map_check(int fd)
-{	
+{
 	int		val;
 	int		space;
 	char	*output;
-	
+
 	val = 0;
 	space = 0;
+	output = NULL;
 	while (get_next_line(fd, &output) > 0)
-	{		
+	{
 		space = map_check2(output);
-		if (!map_check_char(output))
+		if (!map_check_char(output, val))
 			space = 0;
 		if (space == 0)
 		{
 			free(output);
 			return (0);
 		}
-		//prm->xcard = get_max_x(prm, output);
-		//fprintf(stderr, "prm->xcard %d\n", prm->xcard);
 		space = 0;
 		val++;
 		free(output);
 	}
-	free(output);
+	if (output != NULL)
+		free(output);
 	return (val);
 }
 
@@ -229,6 +247,7 @@ int		build_nbr(t_vis *prm, char **out, int xsize, int i)
 	while (++k < xsize)
 	{
 		//prm->card[j][k] = ft_atoi(tmp[k]);
+		//printf("tmp[k] %s\n", tmp[k]);
 		prm->card[i][k] = ft_atoi(tmp[k]);
 		//fprintf(stderr, "tmp[k] %s prm->card[i][k] %d", tmp[k], prm->card[i][k]);
 		//fprintf(stderr, "%d", prm->card[i][k]);
@@ -239,35 +258,78 @@ int		build_nbr(t_vis *prm, char **out, int xsize, int i)
 }
 
 
-
-void	build_card(t_vis *prm, int fd, char *output, char **arg)
+int hex_int(char *hex)
 {
-	int		i;
-	int		j;
-	int		k;
-	char	**tmp;
+	int byte;
+	int val;
 
-	i = 0;
-	j = 0;
-	fd = open(arg[1], O_RDONLY);
-	prm->card = (int **)malloc(sizeof(int *) * prm->ycard);
+	val = 0;
+	while (*hex)
+	{
+		byte = *hex++; 
+		if (byte >= '0' && byte <= '9')
+			byte -= '0';
+		else if (byte >= 'a' && byte <='f')
+			byte -= 'a' + 10;
+		else if (byte >= 'A' && byte <='F')
+			byte -= 'A' + 10; 
+		val = (val << 4) | (byte & 0xF);
+	}
+	//printf("val|%d\n", val);
+	return (val);
+}
+
+int		build_nbr_hex(t_vis *prm, char **hex, int xsize, int i)
+{
+	int		k;
+	int		space;
+	char	**tmp;
+	char	*str;
+
+	k = -1;
+	tmp = ft_strsplit(hex[0], ' ');	
+	while (++k < xsize)
+	{
+		str = tmp[k];
+		space = -1;
+		while (str[++space])
+		{
+			if (str[space + 1] == ',')
+			{
+				prm->hex[i][k] = hex_int(str + 2);
+				break ;
+			}
+			else
+				prm->hex[i][k] = ft_atoi(tmp[k]);
+		}	
+	}
+	free_map(tmp, xsize);
+	free_map(hex, 1);
+	return (0);
+}
+
+void	build_card_pars(t_vis *prm, int fd, char *output, int i)
+{
+	char	**tmp;
+	char	**hexim;
+
 	while (get_next_line(fd, &output) > 0)
-	{		
+	{
 		if (output[0] != '\0')
 		{
-			//prm->xcard = get_max_x(prm, output);
 			prm->xcard = map_check2(output);
 			prm->card[i] = (int *)malloc(sizeof(int) * prm->xcard);
+			prm->hex[i] = (int *)malloc(sizeof(int) * prm->xcard);
 			if (!ft_strchr(output, '\n'))
+			{
 				tmp = ft_strsplit(output, '\n');
-
-			//fprintf(stderr, "strlen %d tmp[0] %s\n", prm->xcard, tmp[0]);
-			if (tmp[j])
+				hexim = ft_strsplit(output, '\n');
+			}
+			if (tmp[0])
 			{
 				build_nbr(prm, tmp, prm->xcard, i);
-				fprintf(stderr, "\n");
+				build_nbr_hex(prm, hexim, prm->xcard, i);
 			}
-			j = 0;
 			i++;
 		}
 		free(output);
@@ -275,60 +337,126 @@ void	build_card(t_vis *prm, int fd, char *output, char **arg)
 	free(output);
 }
 
-
-
-
-
-void		fit_color(t_vis *prm, int x, int y)
+void	build_card(t_vis *prm, int fd, char *output)
 {
-	//fprintf(stderr, "prm->card[y][x] * prm->zoom %f\n", prm->card[y][x] * prm->zoom);	
-	double	val;
-	intmax_t	i;
-	//int			hex;
+	char	**tmp;
+	char	**hexim;
 
-	//hex = 0x7f8711;
-	val = prm->card[y][x] * prm->zoom;
+	prm->card = (int **)malloc(sizeof(int *) * prm->ycard);
+	prm->hex = (int **)malloc(sizeof(int *) * prm->ycard);
+	build_card_pars(prm, fd, output, 0);
+	/*while (get_next_line(fd, &output) > 0)
+	{
+		if (output[0] != '\0')
+		{
+			prm->xcard = map_check2(output);
+			prm->card[i] = (int *)malloc(sizeof(int) * prm->xcard);
+			prm->hex[i] = (int *)malloc(sizeof(int) * prm->xcard);
+			if (!ft_strchr(output, '\n'))
+			{
+				tmp = ft_strsplit(output, '\n');
+				hexim = ft_strsplit(output, '\n');
+			}
+			if (tmp[0])
+			{
+				build_nbr(prm, tmp, prm->xcard, i);
+				build_nbr_hex(prm, hexim, prm->xcard, i);
+			}
+			i++;
+		}
+		free(output);
+	}
+	free(output);*/
+}
+
+
+
+
+
+
+
+
+
+/*void convhex(char *mas)
+{
+	int	i;
+	int temp;
+
+	i = 0;
+	while (mas[i] != '\0')
+	{
+		temp = (mas[i] - '0') % 16 ;
+		temp = temp / 16 ;
+
+		ft_putchar(temp + '0');
+		i++;
+	}		
+}*/
+
+/*int hex2int(t_vis *prm, char *hex)
+{
+	int byte;
+    int val;
+
+    val = 0;
+    while (*hex)
+    {
+         byte = *hex++; 
+        if (byte >= '0' && byte <= '9')
+        	byte = byte - '0';
+        else if (byte >= 'a' && byte <='f')
+        	byte = byte - 'a' + 10;
+        else if (byte >= 'A' && byte <='F')
+        	byte = byte - 'A' + 10; 
+        val = (val << 4) | (byte & 0xF);
+    }
+    printf("val %d\n", val);
+
+    prm->r = ((val >> 16) & 0xFF);
+	prm->g = ((val >> 8) & 0xFF);
+	prm->b = ((val) & 0xFF);
+    //return val;
+    printf("prm->r %d prm->g %d prm->b %d\n", prm->r, prm->g, prm->b);
+    return (0);
+}*/
+
+void	set_hex(t_vis *prm, int val)
+{
+	prm->r = ((val >> 16) & 0xFF);
+	prm->g = ((val >> 8) & 0xFF);
+	prm->b = ((val) & 0xFF);
+}
+
+void	set_color(t_vis *prm, int r, int g, int b)
+{
+	prm->r = r;
+	prm->g = g;
+	prm->b = b;
+}
+
+void	fit_color(t_vis *prm, int x, int y)
+{
+	double		val;
+	double		val1;
+	intmax_t	i;
+
 	i = 1;
-	i *= val; 
-	//(val == 0) ? val = 0 : val;
-	//fprintf(stderr, "### %f\n", ((hex >> 16) & 0xFF) / 255.0);
-	//fprintf(stderr, "### %f\n", ((hex >> 8) & 0xFF) / 255.0);
-	//fprintf(stderr, "e->card[y][x] * e->zoom %ju\n", i);
-	if (i == 0)		
+	val = prm->card[y][x] * prm->zoom;
+	val1 = prm->hex[y][x] * prm->zoom;
+	i *= val;
+	if (val != val1)
 	{
-		prm->r = 55;
-		prm->g = 244;
-		prm->b = 89;
-		// prm->r = ((hex >> 16) & 0xFF) / 255.0;
-		// prm->g = ((hex >> 8) & 0xFF) / 255.0;
-		// prm->b = ((hex) & 0xFF) / 255.0;
+		set_hex(prm, prm->hex[y][x]);
+		return ;
 	}
+	else if (i == 0)
+		set_color(prm, 55, 244, 89);
 	else if (i < 0)
-	{
-		prm->r = 66;
-		prm->g = 128;
-		prm->b = 244;
-	}
-	else if (i > 0 && i < 300)
-	{
-		prm->r = 96;
-		prm->g = 66;
-		prm->b = 49;
-	}
+		set_color(prm, 66, 128, 244);
+	else if (i > 0 && i < 200)
+		set_color(prm, 96, 66, 49);
 	else
-	{
-		prm->r = 255;
-		prm->g = 255;
-		prm->b = 255;
-	}
-	// if (prm->card[y][x] <= 0)
-	// 	return (55);
-	// else if (prm->card[y][x] > 0 && prm->card[y][x] <= 40)
-	// 	return (100);
-	// else if (prm->card[y][x] > 40 && prm->card[y][x] <= 120)
-	// 	return (180);
-	// else
-	// 	return (255);
+		set_color(prm, 255, 255, 255);
 }
 
 
@@ -535,7 +663,7 @@ int		keyboard_vis_hook(int key, t_vis *prm)
 	if (key == 53)
 	{
 		//system("leaks fdf");
-		exit(exit(EXIT_SUCCESS););
+		exit(EXIT_SUCCESS);
 	}
 	else if (key == UP)
 		prm->pos_y -= 5;
@@ -633,13 +761,14 @@ void	parse_file(t_vis *prm, char **arg)
 	prm->ycard = 0;
 	if(!(fd = open(arg[1], O_RDONLY)))
 		exit(1);
-	if(!(prm->ycard = mapsize_and_check(fd)))
+	if(!(prm->ycard = map_check(fd)))
 	{
 		print_err("Wrong map\n");
 		exit(1);
 	}
 	close(fd);
-	build_card(prm, fd, output, arg);
+	fd = open(arg[1], O_RDONLY);
+	build_card(prm, fd, output);
 	//free(output);
 	close(fd);
 	build_vis(prm);

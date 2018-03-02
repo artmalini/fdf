@@ -17,7 +17,7 @@ INC = -I/includes
 FLAGS = -Wall -Wextra -Werror -O3
 LIB_DIR = libft
 
-SRC_FILES = main.c
+SRC_FILES = main0.c
 
 RED		= \033[31m
 GREEN	= \033[32m

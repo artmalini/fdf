@@ -12,25 +12,18 @@
 
 NAME = fdf
 
-INC = -I/includes
-#INC = -I ./libft -I ./includes
-FLAGS = -Wall -Wextra -Werror -O3
+INC = -I ./includes
+FLAGS = -Wall -Wextra -Werror -O2
 LIB_DIR = libft
 
-SRC_FILES = main0.c
+SRC_FILES = main.c keyhook.c vismap.c buildcard.c map_check.c mng.c mng_color.c
 
 RED		= \033[31m
 GREEN	= \033[32m
 CYAN	= \033[36m
 GREY	= \033[37m
 
-#SRC = $(SRC_FILES:.c=.o)
 OBJ = $(SRC_FILES:.c=.o)
-
-RED		= \033[31m
-GREEN	= \033[32m
-CYAN	= \033[36m
-GREY	= \033[37m
 
 all: $(NAME)
 
@@ -38,11 +31,10 @@ $(NAME): $(OBJ)
 	@echo " $(GREEN)Compiling....."
 	@make -C libft
 	@gcc -o $(NAME) $(FLAGS) $(INC) $(OBJ) -lmlx -framework OpenGL -framework AppKit libft/libft.a
-	#@gcc -c $(FLAGS) -L $(LIB_DIR) -o $@ $^ -lmlx -framework OpenGL -framework AppKit libft/libft.a
 	@echo " $(CYAN)$(NAME) $(GREY)generated \xF0\x9F\x98\xBA"
 
-#%.o: %.c
-#	@gcc $(FLAGS) -c -o $@ $< $(INC)
+%.o: %.c
+	@gcc $(FLAGS) $(INC) -c -o $@ $<
 
 clean:
 	@/bin/rm -f $(OBJ)
